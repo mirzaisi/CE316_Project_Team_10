@@ -15,7 +15,7 @@ public class ApplicationMain extends Application {
         WebView webView = new WebView();
         WebEngine webEngine = webView.getEngine();
 
-        var resource = getClass().getResource("main_page.html");
+        var resource = getClass().getResource("index.html");
         if (resource == null) {
             System.err.println("Error: Resource not found!\nmain_page.html not found!");
         } else {

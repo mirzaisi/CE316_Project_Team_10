@@ -1,0 +1,113 @@
+<header class="flex items-center px-5 h-14 w-full bg-[#1B1B1C] shadow-[0_9px_16px_rgba(16,185,129,0.08)] shrink-0 top " style="font-family:'Inter',sans-serif;">
+
+    <!-- Logo -->
+    <div class="flex items-center gap-2.5 pr-5 border-r border-white/8 mr-4 shrink-0">
+        <div class="w-7 h-7 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 24 24" fill="none" width="15" height="15">
+                <path d="M8 6L3 12L8 18" stroke="#4EDEA3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16 6L21 12L16 18" stroke="#4EDEA3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <span class="text-[15px] font-black tracking-tight text-[#E5E2E1]">IAE</span>
+    </div>
+
+    <!-- Sol Nav: exclusive seçim grubu -->
+    <nav class="flex items-center gap-1" id="main-nav">
+
+        <button data-page="dashboard"
+                class="nav-main-btn relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all">
+            <span class="nav-indicator absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full"></span>
+            <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" class="shrink-0">
+                <path d="M3 3h8v8H3zm0 10h8v8H3zm10-10h8v8h-8zm0 10h8v8h-8z"/>
+            </svg>
+            Dashboard
+        </button>
+
+        <button data-page="environments"
+                class="nav-main-btn relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all">
+            <span class="nav-indicator absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-full"></span>
+            <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" class="shrink-0">
+                <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+            </svg>
+            Environments
+        </button>
+
+    </nav>
+
+    <!-- Sağ: Add Project + Help -->
+    <div class="ml-auto flex items-center gap-1">
+
+        <button onclick="if(window.app) window.app.navigate('add'); else console.log('Navigate: add');"
+                class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all text-outline-variant hover:text-on-surface hover:bg-white/5">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" class="shrink-0">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add Project
+        </button>
+
+        <div class="w-px h-5 bg-white/8 mx-1"></div>
+
+        <button onclick="if(window.app) window.app.navigate('help'); else console.log('Navigate: help');"
+                class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all text-outline-variant hover:text-on-surface hover:bg-white/5">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" class="shrink-0">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+            </svg>
+            Help
+        </button>
+
+    </div>
+
+</header>
+
+<style>
+    .nav-main-btn {
+        color: #E5E2E1;
+    }
+    .nav-main-btn:hover {
+        color: #e5e2e1;
+        background: rgba(255,255,255,0.05);
+        box-shadow:0 0 30px rgba(78, 222, 163, 0.18);
+        transform: scale(1.05);
+    }
+    .nav-main-btn .nav-indicator {
+        opacity: 0;
+    }
+    .nav-main-btn.is-active {
+        color: #4edea3;
+        background: rgba(78,222,163,0.08);
+    }
+    .nav-main-btn.is-active .nav-indicator {
+        opacity: 1;
+    }
+    .nav-main-btn.is-active:hover {
+        background: rgba(78,222,163,0.12);
+    }
+</style>
+
+<script>
+    (function () {
+        const buttons = document.querySelectorAll('.nav-main-btn');
+
+        function setActive(page) {
+            buttons.forEach(btn => {
+                if (btn.dataset.page === page) {
+                    btn.classList.add('is-active');
+                } else {
+                    btn.classList.remove('is-active');
+                }
+            });
+            if (window.app) window.app.navigate(page);
+            else console.log('Navigate:', page);
+        }
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => setActive(btn.dataset.page));
+        });
+
+        // Başlangıçta dashboard aktif
+        setActive('dashboard');
+
+        // Dışarıdan çağrılabilir
+        window.navTo = setActive;
+    })();
+</script>
