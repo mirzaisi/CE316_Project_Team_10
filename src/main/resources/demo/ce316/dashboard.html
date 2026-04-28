@@ -3,7 +3,7 @@
     <aside id="project-sidebar" class="flex flex-col border-r border-outline-variant/10 bg-[#1B1B1C] shrink-0" style="width: clamp(200px, 33.333%, 340px);">
         <div class="px-5 py-4 border-b border-outline-variant/10">
             <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-outline-variant mb-0.5">Workspace</p>
-            <h2 class="text-sm font-bold text-on-surface">Grading Projects</h2>
+            <h2 class="text-sm font-bold text-on-surface">Your Projects</h2>
         </div>
 
         <div id="project-list" class="flex-1 overflow-y-auto py-2" style="scrollbar-width:none;">
@@ -15,31 +15,8 @@
                 <p class="text-sm text-outline-variant leading-relaxed">No projects yet.<br/><span class="text-primary/80">Please create a new project</span> to get started.</p>
             </div>
 
-            <!-- Proje öğeleri (örnek verilerle, JS ile dinamik hale getirilebilir) -->
-            <div class="project-items px-2 space-y-1 hidden" id="project-items">
-                <button onclick="selectProject(this, 'hw1')" data-id="hw1"
-                        class="project-item w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all hover:bg-surface-container-high group active-project">
-                    <div class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" class="text-primary"><path d="M320-240 80-480l240-240 57 57-184 184 183 183-56 56Zm320 0-57-57 184-184-183-183 56-56 240 240-240 240Z"/></svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-on-surface truncate">Homework 1</p>
-                        <p class="text-[10px] text-outline-variant">C-Program · 48 students</p>
-                    </div>
-                    <span class="w-1.5 h-1.5 rounded-full bg-primary shrink-0 opacity-0 group-[.active-project]:opacity-100"></span>
-                </button>
-                <button onclick="selectProject(this, 'final')" data-id="final"
-                        class="project-item w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all hover:bg-surface-container-high group">
-                    <div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" class="text-outline-variant"><path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z"/></svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-on-surface truncate">Final Project</p>
-                        <p class="text-[10px] text-outline-variant">Java-Lang · 48 students</p>
-                    </div>
-                    <span class="w-1.5 h-1.5 rounded-full bg-primary shrink-0 opacity-0 group-[.active-project]:opacity-100"></span>
-                </button>
-            </div>
+            <!-- Proje öğeleri (JS tarafından dinamik olarak doldurulur) -->
+            <div class="project-items px-2 space-y-1 hidden" id="project-items"></div>
         </div>
 
         <!-- Check & Run butonu -->
@@ -55,7 +32,7 @@
             </div>
 
             <button id="btn-run-pipeline" onclick="handleCheckAndRun()"
-                    class=" w-full bg-primary/10 text-primary border border-primary/20 rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary/20 transition-all active:scale-[0.98]">
+                    class="w-full bg-primary/10 text-primary border border-primary/20 rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary/20 transition-all active:scale-[0.98]">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                     <path d="M8 5v14l11-7z"/>
                 </svg>
@@ -74,7 +51,6 @@
                     <path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z"/>
                 </svg>
             </div>
-
             <div class="max-w-xs">
                 <h3 class="text-on-surface font-bold text-lg tracking-tight">No project selected</h3>
                 <p class="text-outline-variant text-sm mt-2 leading-relaxed">
@@ -87,7 +63,7 @@
         <div id="project-content" class="flex-1 h-full w-full flex flex-col overflow-hidden hidden">
 
             <!-- ÜST: Bilgi Paneli -->
-            <div class=" flex-1 flex flex-col overflow-hidden">
+            <div class="flex-1 flex flex-col overflow-hidden">
 
                 <!-- Tab Bar -->
                 <div class="flex items-center gap-1 px-6 pt-4 pb-0 border-b border-outline-variant/10 bg-[#1B1B1C] shrink-0">
@@ -104,7 +80,7 @@
                         Config
                     </button>
                     <div class="ml-auto flex items-center gap-2 pb-2">
-                        <span id="panel-project-name" class="text-[11px] font-mono text-outline-variant/60 bg-surface-container px-3 py-1 rounded-full">hw1</span>
+                        <span id="panel-project-name" class="text-[11px] font-mono text-outline-variant/60 bg-surface-container px-3 py-1 rounded-full">—</span>
                     </div>
                 </div>
 
@@ -113,7 +89,6 @@
 
                     <!-- NOTES TAB -->
                     <div id="tab-notes" class="tab-panel absolute inset-0 flex flex-col overflow-hidden">
-                        <!-- Sabit progress bar (check&run durumu) -->
                         <div class="px-6 py-3 bg-surface-container-low border-b border-outline-variant/10 shrink-0">
                             <div class="flex justify-between items-center mb-1.5">
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-outline-variant">Pipeline Status</span>
@@ -125,7 +100,7 @@
                         </div>
 
                         <!-- Öğrenci listesi -->
-                        <div class="flex overflow-y-auto px-6 py-4" style="scrollbar-width:none;">
+                        <div class="flex-1 overflow-y-auto px-6 py-4" style="scrollbar-width:none;">
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                 <tr>
@@ -137,69 +112,7 @@
                                 </tr>
                                 </thead>
                                 <tbody class="divide-y divide-outline-variant/10" id="student-table-body">
-                                <!-- Örnek satır -->
-                                <tr class="group hover:bg-surface-container-high/30 transition-colors">
-                                    <td class="py-3 pr-4 text-sm font-mono text-outline-variant">U9021443</td>
-                                    <td class="py-3 pr-4">
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-[9px] font-bold text-primary">JD</div>
-                                            <span class="text-sm font-medium text-on-surface">Jordan Davids</span>
-                                        </div>
-                                    </td>
-                                    <td class="py-3 pr-4">
-                                        <span class="text-sm font-bold text-primary" id="grade-U9021443">87</span>
-                                        <span class="text-[10px] text-outline-variant">/100</span>
-                                    </td>
-                                    <td class="py-3 pr-4">
-                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                                            <span class="text-[10px] font-bold uppercase tracking-wide">Success</span>
-                                        </div>
-                                    </td>
-                                    <td class="py-3 text-right">
-                                        <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onclick="editGrade('U9021443')" title="Edit Grade"
-                                                    class="p-1.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-primary transition-all">
-                                                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                                            </button>
-                                            <button onclick="viewCode('U9021443')" title="View Code"
-                                                    class="p-1.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-on-surface transition-all">
-                                                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="group hover:bg-surface-container-high/30 transition-colors">
-                                    <td class="py-3 pr-4 text-sm font-mono text-outline-variant">U9021389</td>
-                                    <td class="py-3 pr-4">
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-7 h-7 rounded-full bg-secondary-container/30 flex items-center justify-center text-[9px] font-bold text-secondary">AM</div>
-                                            <span class="text-sm font-medium text-on-surface">Alex Martinez</span>
-                                        </div>
-                                    </td>
-                                    <td class="py-3 pr-4">
-                                        <span class="text-sm font-bold text-error" id="grade-U9021389">42</span>
-                                        <span class="text-[10px] text-outline-variant">/100</span>
-                                    </td>
-                                    <td class="py-3 pr-4">
-                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error/10 text-error border border-error/20">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
-                                            <span class="text-[10px] font-bold uppercase tracking-wide">Failed</span>
-                                        </div>
-                                    </td>
-                                    <td class="py-3 text-right">
-                                        <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onclick="editGrade('U9021389')" title="Edit Grade"
-                                                    class="p-1.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-primary transition-all">
-                                                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                                            </button>
-                                            <button onclick="viewCode('U9021389')" title="View Code"
-                                                    class="p-1.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-on-surface transition-all">
-                                                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <!-- JS tarafından dinamik olarak doldurulur -->
                                 </tbody>
                             </table>
                         </div>
@@ -207,32 +120,8 @@
 
                     <!-- LOGS TAB -->
                     <div id="tab-logs" class="tab-panel absolute inset-0 flex flex-col overflow-hidden hidden">
-                        <div class="flex-1 overflow-y-auto p-6 font-mono text-xs space-y-2" style="scrollbar-width:none;">
-                            <div class="flex gap-3">
-                                <span class="text-outline-variant/50 shrink-0">14:02:31</span>
-                                <span class="text-primary">[INFO]</span>
-                                <span class="text-on-surface/80">Pipeline initialized for Homework 1</span>
-                            </div>
-                            <div class="flex gap-3">
-                                <span class="text-outline-variant/50 shrink-0">14:02:32</span>
-                                <span class="text-primary">[INFO]</span>
-                                <span class="text-on-surface/80">Compiling U9021443/main.c — OK</span>
-                            </div>
-                            <div class="flex gap-3">
-                                <span class="text-outline-variant/50 shrink-0">14:02:33</span>
-                                <span class="text-secondary">[WARN]</span>
-                                <span class="text-on-surface/80">U9021389/main.c — implicit declaration of function</span>
-                            </div>
-                            <div class="flex gap-3">
-                                <span class="text-outline-variant/50 shrink-0">14:02:34</span>
-                                <span class="text-error">[ERROR]</span>
-                                <span class="text-on-surface/80">U9021389 — Test case 3 failed: expected 42 got 0</span>
-                            </div>
-                            <div class="flex gap-3">
-                                <span class="text-outline-variant/50 shrink-0">14:02:35</span>
-                                <span class="text-primary">[INFO]</span>
-                                <span class="text-on-surface/80">Pipeline complete. 1/2 passed.</span>
-                            </div>
+                        <div id="log-entries" class="flex-1 overflow-y-auto p-6 font-mono text-xs space-y-2" style="scrollbar-width:none;">
+                            <!-- JS tarafından dinamik olarak doldurulur -->
                         </div>
                     </div>
 
@@ -323,26 +212,200 @@
         </div>
     </div>
 </div>
+
+<!-- Kod Görüntüleyici Modal -->
+<div id="code-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.7); backdrop-filter:blur(6px);">
+    <div class="bg-[#1B1B1C] border border-outline-variant/20 rounded-2xl shadow-2xl flex flex-col" style="width:680px; max-width:95vw; max-height:80vh;">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant/10 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" class="text-primary"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+                </div>
+                <div>
+                    <p id="code-modal-filename" class="text-sm font-bold text-on-surface font-mono">main.c</p>
+                    <p id="code-modal-path" class="text-[10px] text-outline-variant">submissions/U0000000/main.c</p>
+                </div>
+            </div>
+            <button onclick="closeCodeModal()" class="w-7 h-7 rounded-lg hover:bg-surface-container-high flex items-center justify-center text-outline-variant hover:text-on-surface transition-all">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+        </div>
+        <!-- Satır numaralı kod alanı -->
+        <div class="flex-1 overflow-auto" style="scrollbar-width:thin; scrollbar-color:#3c4a42 transparent;">
+            <table class="w-full border-collapse font-mono text-xs" id="code-modal-table">
+                <!-- JS tarafından doldurulur -->
+            </table>
+        </div>
+        <!-- Footer -->
+        <div class="flex items-center justify-between px-5 py-2.5 border-t border-outline-variant/10 shrink-0">
+            <span id="code-modal-lang" class="text-[10px] font-bold uppercase tracking-widest text-outline-variant">C</span>
+            <span id="code-modal-lines" class="text-[10px] font-mono text-outline-variant">0 lines</span>
+        </div>
+    </div>
+</div>
+
 <style>
     @keyframes pulse-green {
-        0% { box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.4); }
-        70% { box-shadow: 0 0 0 10px rgba(78, 222, 163, 0); }
+        0%   { box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.4); }
+        70%  { box-shadow: 0 0 0 10px rgba(78, 222, 163, 0); }
         100% { box-shadow: 0 0 0 0 rgba(78, 222, 163, 0); }
     }
     .btn-run-pulse {
         animation: pulse-green 2s infinite cubic-bezier(0.66, 0, 0, 1);
     }
 
+    #code-modal-table td { padding: 0; }
+    #code-modal-table .ln {
+        padding: 2px 16px 2px 20px;
+        text-align: right;
+        color: #3c4a42;
+        user-select: none;
+        border-right: 1px solid rgba(60,74,66,0.3);
+        min-width: 48px;
+    }
+    #code-modal-table .lc {
+        padding: 2px 20px;
+        color: #c9d1d9;
+        white-space: pre;
+    }
+    #code-modal-table tr:hover .ln { color: #86948a; }
+    #code-modal-table tr:hover .lc { background: rgba(255,255,255,0.03); }
 </style>
+
 <script>
     (function() {
         let currentEditId = null;
+        let currentProjectId = null;
         let runInterval = null;
         let runPct = 0;
 
-        // Başlangıçta örnek projeleri göster
-        document.getElementById('empty-state').classList.add('hidden');
-        document.getElementById('project-items').classList.remove('hidden');
+        // --- Render Fonksiyonları ---
+
+        function renderProjects(projects) {
+            const container = document.getElementById('project-items');
+            const emptyState = document.getElementById('empty-state');
+
+            if (!projects || projects.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.innerHTML = '';
+
+            projects.forEach((proj, idx) => {
+                const isFirst = idx === 0;
+                const btn = document.createElement('button');
+                btn.dataset.id = proj.id;
+                btn.className = 'project-item w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all hover:bg-surface-container-high group' + (isFirst ? ' active-project' : '');
+                btn.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg ${isFirst ? 'bg-primary/15' : 'bg-surface-container-high'} flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" class="${isFirst ? 'text-primary' : 'text-outline-variant'}">
+                            <path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-on-surface truncate">${proj.name}</p>
+                        <p class="text-[10px] text-outline-variant">${proj.lang}-Program · ${proj.studentCount} students</p>
+                    </div>
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary shrink-0 opacity-0 group-[.active-project]:opacity-100"></span>
+                `;
+                btn.addEventListener('click', () => selectProject(btn, proj.id));
+                container.appendChild(btn);
+            });
+
+            container.classList.remove('hidden');
+        }
+
+        function renderStudents(students) {
+            const tbody = document.getElementById('student-table-body');
+            tbody.innerHTML = '';
+
+            students.forEach(s => {
+                const initials = s.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                const ok = s.status === 'success';
+                const tr = document.createElement('tr');
+                tr.className = 'group hover:bg-surface-container-high/30 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3 pr-4 text-sm font-mono text-outline-variant">${s.id}</td>
+                    <td class="py-3 pr-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full ${ok ? 'bg-primary/15 text-primary' : 'bg-secondary-container/30 text-secondary'} flex items-center justify-center text-[9px] font-bold">${initials}</div>
+                            <span class="text-sm font-medium text-on-surface">${s.name}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 pr-4">
+                        <span class="text-sm font-bold ${ok ? 'text-primary' : 'text-error'}" id="grade-${s.id}">${s.grade}</span>
+                        <span class="text-[10px] text-outline-variant">/100</span>
+                    </td>
+                    <td class="py-3 pr-4" id="status-${s.id}">
+                        ${getStatusBadge(s.grade)}
+                    </td>
+                    <td class="py-3 text-right">
+                        <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="editGrade('${s.id}')" title="Edit Grade"
+                                    class="p-1.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-primary transition-all">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                            </button>
+                            <button onclick="viewCode('${s.id}')" title="View Code"
+                                    class="p-1.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-on-surface transition-all">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('log-entries');
+            container.innerHTML = '';
+            const levelColors = { INFO: 'text-primary', WARN: 'text-secondary', ERROR: 'text-error' };
+            logs.forEach(log => {
+                const div = document.createElement('div');
+                div.className = 'flex gap-3';
+                div.innerHTML = `
+                    <span class="text-outline-variant/50 shrink-0">${log.time}</span>
+                    <span class="${levelColors[log.level] || 'text-primary'}">[${log.level}]</span>
+                    <span class="text-on-surface/80">${log.message}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function loadConfig(cfg) {
+            document.getElementById('cfg-lang').value = cfg.lang || '';
+            document.getElementById('cfg-timeout').value = cfg.timeout || '';
+            document.getElementById('cfg-maxgrade').value = cfg.maxGrade || '';
+            document.getElementById('cfg-flags').value = cfg.flags || '';
+        }
+
+        function getStatusBadge(grade) {
+            if (grade >= 60) {
+                return `<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                    <span class="text-[10px] font-bold uppercase tracking-wide">Success</span>
+                </div>`;
+            }
+            return `<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error/10 text-error border border-error/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                <span class="text-[10px] font-bold uppercase tracking-wide">Failed</span>
+            </div>`;
+        }
+
+        // Java köprüsü hazır olunca çağrılır
+        window.loadDashboard = function() {
+            if (!window.app) return;
+            const projects = JSON.parse(window.app.getProjects());
+            renderProjects(projects);
+            if (projects.length > 0) {
+                const firstBtn = document.querySelector('.project-item');
+                if (firstBtn) selectProject(firstBtn, projects[0].id);
+            }
+        };
 
         window.selectProject = function(btn, id) {
             document.querySelectorAll('.project-item').forEach(el => el.classList.remove('active-project'));
@@ -350,6 +413,15 @@
             document.getElementById('no-selection').classList.add('hidden');
             document.getElementById('project-content').classList.remove('hidden');
             document.getElementById('panel-project-name').textContent = id;
+
+            currentProjectId = id;
+
+            if (window.app) {
+                renderStudents(JSON.parse(window.app.getStudents(id)));
+                renderLogs(JSON.parse(window.app.getLogs(id)));
+                loadConfig(JSON.parse(window.app.getConfig(id)));
+            }
+
             switchTab('notes');
         };
 
@@ -361,7 +433,6 @@
                 b.classList.toggle('bg-surface-container-high/60', active);
                 b.classList.toggle('border-transparent', !active);
                 b.classList.toggle('text-outline-variant', !active);
-                b.classList.toggle('bg-surface-container-high/60', active);
             });
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
             document.getElementById('tab-' + name).classList.remove('hidden');
@@ -370,10 +441,9 @@
         window.handleCheckAndRun = function() {
             if (runInterval) return;
 
-            const btn = document.getElementById('btn-run-pipeline'); // Butonu yakalıyoruz
+            const btn = document.getElementById('btn-run-pipeline');
             runPct = 0;
 
-            // 1. ADIM: Pulse animasyonunu başlat ve butonu pasifleştir
             btn.classList.add('btn-run-pulse');
             btn.disabled = true;
 
@@ -394,11 +464,10 @@
                     clearInterval(runInterval);
                     runInterval = null;
 
-                    // 2. ADIM: İşlem bittiği için pulse animasyonunu kaldır ve butonu aç
                     btn.classList.remove('btn-run-pulse');
                     btn.disabled = false;
 
-                    appendTerminal(termOut, '[INFO] Done. 1/2 passed.', '#4EDEA3');
+                    appendTerminal(termOut, '[INFO] Pipeline done.', '#4EDEA3');
                 }
 
                 const pct = Math.round(runPct);
@@ -448,45 +517,159 @@
         window.confirmEdit = function() {
             if (!currentEditId) return;
             const val = parseInt(document.getElementById('modal-grade-input').value);
-            const el = document.getElementById('grade-' + currentEditId);
-            if (el && !isNaN(val)) el.textContent = Math.min(100, Math.max(0, val));
+            if (isNaN(val)) return;
+            const clamped = Math.min(100, Math.max(0, val));
+
+            const gradeEl = document.getElementById('grade-' + currentEditId);
+            if (gradeEl) {
+                gradeEl.textContent = clamped;
+                gradeEl.className = 'text-sm font-bold ' + (clamped >= 60 ? 'text-primary' : 'text-error');
+            }
+
+            const statusEl = document.getElementById('status-' + currentEditId);
+            if (statusEl) statusEl.innerHTML = getStatusBadge(clamped);
+
+            if (window.app && currentProjectId) {
+                window.app.updateGrade(currentEditId, currentProjectId, String(clamped));
+            }
+
             closeEditModal();
         };
 
         window.viewCode = function(id) {
-            const termOut = document.getElementById('terminal-output');
-            appendTerminal(termOut, '$ cat submissions/' + id + '/main.c', '#E5E2E1');
-            appendTerminal(termOut, '#include <stdio.h>\nint main() { printf("Hello"); return 0; }', '#A3BE8C');
+            const data = EXAMPLE_CODE[id];
+            if (!data) {
+                const termOut = document.getElementById('terminal-output');
+                appendTerminal(termOut, '$ cat submissions/' + id + '/main.c', '#E5E2E1');
+                appendTerminal(termOut, '(no preview available)', '#ff6b6b');
+                return;
+            }
+
+            const path = 'submissions/' + id + '/' + data.filename;
+            document.getElementById('code-modal-filename').textContent = data.filename;
+            document.getElementById('code-modal-path').textContent = path;
+            document.getElementById('code-modal-lang').textContent = data.lang;
+
+            const lines = data.code.split('\n');
+            document.getElementById('code-modal-lines').textContent = lines.length + ' lines';
+
+            const table = document.getElementById('code-modal-table');
+            table.innerHTML = lines.map((line, i) => `
+                <tr>
+                    <td class="ln">${i + 1}</td>
+                    <td class="lc">${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('code-modal').classList.remove('hidden');
+            document.getElementById('code-modal').classList.add('flex');
         };
 
-        window.exportConfig = function() {
-            const cfg = {
-                lang: document.getElementById('cfg-lang').value,
-                timeout: document.getElementById('cfg-timeout').value,
+        window.closeCodeModal = function() {
+            document.getElementById('code-modal').classList.add('hidden');
+            document.getElementById('code-modal').classList.remove('flex');
+        };
+
+        function getConfigValues() {
+            return {
+                lang:     document.getElementById('cfg-lang').value,
+                timeout:  document.getElementById('cfg-timeout').value,
                 maxGrade: document.getElementById('cfg-maxgrade').value,
-                flags: document.getElementById('cfg-flags').value
+                flags:    document.getElementById('cfg-flags').value
             };
-            if (window.app) { window.app.saveConfig(JSON.stringify(cfg)); return; }
-            const blob = new Blob([JSON.stringify(cfg, null, 2)], {type:'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-            a.download = 'iae_config.json'; a.click();
+        }
+
+        window.exportConfig = function() {
+            const cfg = getConfigValues();
+            const blob = new Blob([JSON.stringify(cfg, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'iae_config.json';
+            a.click();
         };
 
         window.saveConfig = function() {
-            const cfg = {
-                lang: document.getElementById('cfg-lang').value,
-                timeout: document.getElementById('cfg-timeout').value,
-                maxGrade: document.getElementById('cfg-maxgrade').value,
-                flags: document.getElementById('cfg-flags').value
-            };
-            if (window.app) window.app.saveConfig(JSON.stringify(cfg));
-            const termOut = document.getElementById('terminal-output');
-            appendTerminal(termOut, '[INFO] Config saved.', '#4EDEA3');
+            const cfg = getConfigValues();
+            if (window.app && currentProjectId) {
+                window.app.saveConfig(currentProjectId, cfg.lang, cfg.timeout, cfg.maxGrade, cfg.flags);
+            }
+            appendTerminal(document.getElementById('terminal-output'), '[INFO] Config saved.', '#4EDEA3');
         };
 
-        // Modal dışına tıklayınca kapat
         document.getElementById('edit-modal').addEventListener('click', function(e) {
             if (e.target === this) closeEditModal();
         });
+
+        document.getElementById('code-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeCodeModal();
+        });
     })();
+
+    // Örnek kod önizleme verisi (gerçek dosya okuma entegre edilene kadar)
+    const EXAMPLE_CODE = {
+        'U9021443': {
+            filename: 'main.c',
+            lang: 'C',
+            code: `#include <stdio.h>
+#include <stdlib.h>
+
+int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    printf("%d\\n", factorial(n));
+    return 0;
+}`
+        },
+        'U9021389': {
+            filename: 'main.c',
+            lang: 'C',
+            code: `#include <stdio.h>
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    // TODO: implement factorial
+    printf("%d\\n", 0);
+    return 0;
+}`
+        },
+        'U9021501': {
+            filename: 'Main.java',
+            lang: 'Java',
+            code: `import java.util.Scanner;
+
+public class Main {
+    public static long factorial(int n) {
+        if (n <= 1) return 1;
+        return n * factorial(n - 1);
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        System.out.println(factorial(n));
+    }
+}`
+        },
+        'U9021502': {
+            filename: 'Main.java',
+            lang: 'Java',
+            code: `import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        long result = 1;
+        for (int i = 2; i <= n; i++) result *= i;
+        System.out.println(result);
+    }
+}`
+        }
+    };
 </script>
