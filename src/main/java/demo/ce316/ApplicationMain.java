@@ -9,6 +9,10 @@ import javafx.scene.text.Font;
 import netscape.javascript.JSObject;
 
 public class ApplicationMain extends Application {
+
+    // GC'den korunmak için güçlü referans burada tutulur
+    private final JavaBridge bridge = new JavaBridge();
+
     @Override
     public void start(Stage stage) {
         Font.loadFont(getClass().getResourceAsStream("MaterialSymbols.ttf"),14);
@@ -25,8 +29,13 @@ public class ApplicationMain extends Application {
         webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
                 JSObject window = (JSObject) webEngine.executeScript("window");
-                window.setMember("app", new JavaBridge());
-                webEngine.executeScript("if (typeof loadDashboard === 'function') loadDashboard()");
+                window.setMember("app", bridge);
+                webEngine.executeScript(
+                    "(function retry() {" +
+                    "  if (typeof loadDashboard === 'function') { loadDashboard(); }" +
+                    "  else { setTimeout(retry, 100); }" +
+                    "})();"
+                );
             }
         });
 
@@ -53,6 +62,10 @@ public class ApplicationMain extends Application {
 
         public String getConfig(String projectId) {
             return db.getConfigJson(projectId);
+        }
+
+        public String getStudentCode(String studentId, String projectId) {
+            return db.getStudentCodeJson(studentId, projectId);
         }
 
         public void saveConfig(String projectId, String lang, String timeout, String maxGrade, String flags) {

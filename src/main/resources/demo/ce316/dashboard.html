@@ -537,17 +537,19 @@
         };
 
         window.viewCode = function(id) {
-            const data = EXAMPLE_CODE[id];
-            if (!data) {
+            if (!window.app || !currentProjectId) return;
+
+            const raw = window.app.getStudentCode(id, currentProjectId);
+            const data = JSON.parse(raw);
+
+            if (data.error) {
                 const termOut = document.getElementById('terminal-output');
-                appendTerminal(termOut, '$ cat submissions/' + id + '/main.c', '#E5E2E1');
-                appendTerminal(termOut, '(no preview available)', '#ff6b6b');
+                appendTerminal(termOut, '[ERROR] ' + data.error, '#ff6b6b');
                 return;
             }
 
-            const path = 'submissions/' + id + '/' + data.filename;
             document.getElementById('code-modal-filename').textContent = data.filename;
-            document.getElementById('code-modal-path').textContent = path;
+            document.getElementById('code-modal-path').textContent = data.path;
             document.getElementById('code-modal-lang').textContent = data.lang;
 
             const lines = data.code.split('\n');
@@ -605,71 +607,4 @@
         });
     })();
 
-    // Örnek kod önizleme verisi (gerçek dosya okuma entegre edilene kadar)
-    const EXAMPLE_CODE = {
-        'U9021443': {
-            filename: 'main.c',
-            lang: 'C',
-            code: `#include <stdio.h>
-#include <stdlib.h>
-
-int factorial(int n) {
-    if (n <= 1) return 1;
-    return n * factorial(n - 1);
-}
-
-int main() {
-    int n;
-    scanf("%d", &n);
-    printf("%d\\n", factorial(n));
-    return 0;
-}`
-        },
-        'U9021389': {
-            filename: 'main.c',
-            lang: 'C',
-            code: `#include <stdio.h>
-
-int main() {
-    int n;
-    scanf("%d", &n);
-    // TODO: implement factorial
-    printf("%d\\n", 0);
-    return 0;
-}`
-        },
-        'U9021501': {
-            filename: 'Main.java',
-            lang: 'Java',
-            code: `import java.util.Scanner;
-
-public class Main {
-    public static long factorial(int n) {
-        if (n <= 1) return 1;
-        return n * factorial(n - 1);
-    }
-
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int n = sc.nextInt();
-        System.out.println(factorial(n));
-    }
-}`
-        },
-        'U9021502': {
-            filename: 'Main.java',
-            lang: 'Java',
-            code: `import java.util.Scanner;
-
-public class Main {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int n = sc.nextInt();
-        long result = 1;
-        for (int i = 2; i <= n; i++) result *= i;
-        System.out.println(result);
-    }
-}`
-        }
-    };
 </script>
