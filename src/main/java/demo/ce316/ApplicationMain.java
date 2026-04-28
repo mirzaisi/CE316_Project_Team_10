@@ -26,6 +26,7 @@ public class ApplicationMain extends Application {
             if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
                 JSObject window = (JSObject) webEngine.executeScript("window");
                 window.setMember("app", new JavaBridge());
+                webEngine.executeScript("if (typeof loadDashboard === 'function') loadDashboard()");
             }
         });
 
@@ -36,14 +37,48 @@ public class ApplicationMain extends Application {
     }
 
     public class JavaBridge {
+        private final DatabaseManager db = DatabaseManager.getInstance();
+
+        public String getProjects() {
+            return db.getProjectsJson();
+        }
+
+        public String getStudents(String projectId) {
+            return db.getStudentsJson(projectId);
+        }
+
+        public String getLogs(String projectId) {
+            return db.getLogsJson(projectId);
+        }
+
+        public String getConfig(String projectId) {
+            return db.getConfigJson(projectId);
+        }
+
+        public void saveConfig(String projectId, String lang, String timeout, String maxGrade, String flags) {
+            db.saveConfig(projectId, lang,
+                parseInt(timeout, 5),
+                parseInt(maxGrade, 100),
+                flags);
+        }
+
+        public void updateGrade(String studentId, String projectId, String grade) {
+            db.updateGrade(studentId, projectId, parseInt(grade, 0));
+        }
+
         public void runPipeline() {
             System.out.println("Java: Pipeline başlatılıyor...");
-
         }
 
-        public void saveConfig(String json) {
-            System.out.println("Java: Konfigürasyon kaydediliyor: " + json);
+        private int parseInt(String s, int fallback) {
+            try { return Integer.parseInt(s); }
+            catch (NumberFormatException e) { return fallback; }
         }
+    }
+
+    @Override
+    public void stop() {
+        DatabaseManager.getInstance().close();
     }
 
     public static void main(String[] args) {
