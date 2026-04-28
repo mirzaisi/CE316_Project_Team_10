@@ -100,21 +100,49 @@
                         </div>
 
                         <!-- Öğrenci listesi -->
-                        <div class="flex-1 overflow-y-auto px-6 py-4" style="scrollbar-width:none;">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                <tr>
-                                    <th class="pb-3 text-[10px] font-bold text-outline-variant uppercase tracking-widest">Student ID</th>
-                                    <th class="pb-3 text-[10px] font-bold text-outline-variant uppercase tracking-widest">Name</th>
-                                    <th class="pb-3 text-[10px] font-bold text-outline-variant uppercase tracking-widest">Grade</th>
-                                    <th class="pb-3 text-[10px] font-bold text-outline-variant uppercase tracking-widest">Status</th>
-                                    <th class="pb-3 text-right text-[10px] font-bold text-outline-variant uppercase tracking-widest">Actions</th>
-                                </tr>
-                                </thead>
-                                <tbody class="divide-y divide-outline-variant/10" id="student-table-body">
-                                <!-- JS tarafından dinamik olarak doldurulur -->
-                                </tbody>
-                            </table>
+                        <div class="flex-1 px-6 py-4 pb-4 overflow-y-auto no-scrollbar">
+
+                            <div class="bg-surface-container-low rounded-2xl overflow-hidden shadow-2xl border border-outline-variant/5">
+
+                                <table class="w-full text-left border-collapse">
+
+                                    <thead class="bg-surface-container-high/50">
+
+                                    <tr>
+                                        <th class="px-6 py-4 text-[11px] font-bold text-outline-variant uppercase tracking-widest">
+                                            Student ID
+                                        </th>
+
+                                        <th class="px-6 py-4 text-[11px] font-bold text-outline-variant uppercase tracking-widest">
+                                            Name
+                                        </th>
+
+                                        <th class="px-6 py-4 text-[11px] font-bold text-outline-variant uppercase tracking-widest">
+                                            Grade
+                                        </th>
+
+                                        <th class="px-6 py-4 text-[11px] font-bold text-outline-variant uppercase tracking-widest">
+                                            Status
+                                        </th>
+
+                                        <th class="px-6 py-4 text-right text-[11px] font-bold text-outline-variant uppercase tracking-widest">
+                                            Actions
+                                        </th>
+                                    </tr>
+
+                                    </thead>
+
+                                    <tbody
+                                            id="student-table-body"
+                                            class="divide-y divide-outline-variant/10"
+                                    >
+                                    <!-- JS render -->
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
                         </div>
                     </div>
 
@@ -329,8 +357,8 @@
                 const tr = document.createElement('tr');
                 tr.className = 'group hover:bg-surface-container-high/30 transition-colors';
                 tr.innerHTML = `
-                    <td class="py-3 pr-4 text-sm font-mono text-outline-variant">${s.id}</td>
-                    <td class="py-3 pr-4">
+                    <td class="px-4 py-3 pr-4 text-sm font-mono text-outline-variant">${s.id}</td>
+                    <td class="px-4 py-3 pr-4">
                         <div class="flex items-center gap-2">
                             <div class="w-7 h-7 rounded-full ${ok ? 'bg-primary/15 text-primary' : 'bg-secondary-container/30 text-secondary'} flex items-center justify-center text-[9px] font-bold">${initials}</div>
                             <span class="text-sm font-medium text-on-surface">${s.name}</span>
@@ -343,14 +371,14 @@
                     <td class="py-3 pr-4" id="status-${s.id}">
                         ${getStatusBadge(s.grade)}
                     </td>
-                    <td class="py-3 text-right">
+                    <td class="px-4 py-3 text-right">
                         <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onclick="editGrade('${s.id}')" title="Edit Grade"
-                                    class="p-1.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-primary transition-all">
+                                    class="p-2.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-primary transition-all">
                                 <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                             </button>
                             <button onclick="viewCode('${s.id}')" title="View Code"
-                                    class="p-1.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-on-surface transition-all">
+                                    class="p-2.5 rounded-lg hover:bg-surface-container-highest text-outline-variant hover:text-on-surface transition-all">
                                 <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
                             </button>
                         </div>
