@@ -8,7 +8,10 @@ import javafx.stage.Stage;
 import javafx.scene.text.Font;
 import netscape.javascript.JSObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -16,16 +19,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import javafx.application.Platform;
 
 public class ApplicationMain extends Application {
 
+    // Stored as fields so inner classes and TerminalSession can reference them
+    private WebEngine webEngine;
+    private TerminalSession terminalSession;
     private final JavaBridge bridge = new JavaBridge();
 
     @Override
     public void start(Stage stage) {
         Font.loadFont(getClass().getResourceAsStream("MaterialSymbols.ttf"),14);
         WebView webView = new WebView();
-        WebEngine webEngine = webView.getEngine();
+        webEngine = webView.getEngine();
 
         var resource = getClass().getResource("index.html");
         if (resource == null) {
@@ -48,6 +55,8 @@ public class ApplicationMain extends Application {
         });
 
         Scene scene = new Scene(webView, 1280, 800);
+        stage.minHeightProperty().set(800);
+        stage.minWidthProperty().set(1280);
         stage.setTitle("IAE - Integrated Assignment Environment");
         stage.setScene(scene);
         stage.show();
@@ -89,6 +98,19 @@ public class ApplicationMain extends Application {
 
         public void runPipeline() {
             System.out.println("Java: Pipeline starting...");
+        }
+
+        /** Sends a command to the persistent shell session. Output comes back via JS callbacks. */
+        public void runCommand(String cmd) {
+            if (terminalSession == null) {
+                terminalSession = new TerminalSession(webEngine);
+            }
+            terminalSession.send(cmd);
+        }
+
+        /** Sends Ctrl+C to the running process (interrupts blocking commands). */
+        public void terminalInterrupt() {
+            if (terminalSession != null) terminalSession.interrupt();
         }
 
         public void navigate(String page) {
@@ -295,6 +317,138 @@ public class ApplicationMain extends Application {
     @Override
     public void stop() {
         DatabaseManager.getInstance().close();
+        if (terminalSession != null) terminalSession.destroy();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  TerminalSession — persistent /bin/bash process with bidirectional I/O
+    // ─────────────────────────────────────────────────────────────────────────
+    private static class TerminalSession {
+
+        private static final String SHELL_PATH =
+            "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin";
+
+        // Sentinels that are extremely unlikely to appear in normal command output
+        private static final String SEN_CWD  = "__IAE_CWD_7f3a__:";
+        private static final String SEN_DONE = "__IAE_DONE_7f3a__:";
+
+        private Process    process;
+        private PrintWriter stdin;
+        private final WebEngine webEngine;
+
+        TerminalSession(WebEngine we) {
+            this.webEngine = we;
+            startShell();
+        }
+
+        // ── Shell lifecycle ───────────────────────────────────────────────
+
+        private void startShell() {
+            try {
+                ProcessBuilder pb = new ProcessBuilder("/bin/bash", "--norc", "--noprofile");
+                pb.environment().put("TERM",     "dumb");
+                pb.environment().put("PS1",      "");
+                pb.environment().put("HISTFILE", "");
+                String envPath = System.getenv("PATH");
+                pb.environment().put("PATH",
+                    SHELL_PATH + (envPath != null ? ":" + envPath : ""));
+                pb.directory(new java.io.File(System.getProperty("user.home")));
+                pb.redirectErrorStream(true);
+
+                process = pb.start();
+                stdin   = new PrintWriter(
+                    new java.io.OutputStreamWriter(process.getOutputStream()), true);
+
+                startReader();
+
+                // Emit initial CWD/DONE so the JS prompt initialises correctly
+                stdin.println("echo '" + SEN_CWD  + "'\"$(pwd)\"");
+                stdin.println("echo '" + SEN_DONE + "0'");
+                stdin.flush();
+
+            } catch (Exception e) {
+                System.err.println("TerminalSession: start failed — " + e.getMessage());
+            }
+        }
+
+        private void startReader() {
+            Thread t = new Thread(() -> {
+                try (BufferedReader r = new BufferedReader(
+                        new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = r.readLine()) != null) {
+                        // Strip ANSI escape codes
+                        String clean = line.replaceAll("\\[[0-9;]*[A-Za-z]", "");
+
+                        if (clean.startsWith(SEN_CWD)) {
+                            final String cwd = clean.substring(SEN_CWD.length());
+                            Platform.runLater(() -> jsCall(
+                                "terminalUpdateCwd('" + escJs(cwd) + "')"));
+
+                        } else if (clean.startsWith(SEN_DONE)) {
+                            String rcRaw = clean.substring(SEN_DONE.length())
+                                               .replaceAll("[^0-9]", "");
+                            final String rc = rcRaw.isEmpty() ? "0" : rcRaw;
+                            Platform.runLater(() -> jsCall(
+                                "terminalCommandDone(" + rc + ")"));
+
+                        } else if (!clean.isEmpty()) {
+                            final String esc = escJs(clean);
+                            Platform.runLater(() -> jsCall(
+                                "terminalReceiveLine('" + esc + "')"));
+                        }
+                    }
+                } catch (Exception ignored) {}
+
+                // Shell exited — notify JS
+                Platform.runLater(() -> jsCall(
+                    "terminalReceiveLine('[shell process ended]');" +
+                    "terminalCommandDone(0)"));
+            }, "iae-terminal-reader");
+            t.setDaemon(true);
+            t.start();
+        }
+
+        // ── Public API ────────────────────────────────────────────────────
+
+        void send(String cmd) {
+            if (process == null || !process.isAlive()) startShell();
+            stdin.println(cmd);
+            // Capture exit code first, then report CWD + done
+            stdin.println("__iae_rc=$?; echo '" + SEN_CWD  + "'\"$(pwd)\"; " +
+                                        "echo '" + SEN_DONE + "'\"$__iae_rc\"");
+            stdin.flush();
+        }
+
+        void interrupt() {
+            if (process != null && process.isAlive()) {
+                stdin.print('\u0003'); // ETX = Ctrl+C
+                stdin.println();
+                stdin.flush();
+            }
+        }
+
+        void destroy() {
+            if (process != null) process.destroyForcibly();
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────
+
+        private void jsCall(String expr) {
+            try {
+                webEngine.executeScript("if(typeof " + expr.split("\\(")[0] +
+                    "==='function'){" + expr + "}");
+            } catch (Exception e) {
+                System.err.println("TerminalSession jsCall error: " + e.getMessage());
+            }
+        }
+
+        private static String escJs(String s) {
+            if (s == null) return "";
+            return s.replace("\\", "\\\\")
+                    .replace("'",  "\\'")
+                    .replace("\r", "");
+        }
     }
 
     public static void main(String[] args) {

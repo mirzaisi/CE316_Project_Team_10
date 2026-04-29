@@ -1,4 +1,3 @@
-<!-- Environments Page -->
 <div class="flex flex-col h-full overflow-hidden" style="font-family:'Inter',sans-serif;">
 
     <!-- Header -->
@@ -9,7 +8,7 @@
         </div>
         <div class="flex items-center gap-3">
             <span id="env-total-count" class="text-xs text-outline"></span>
-            <button onclick="loadEnvironments()"
+            <button onclick="loadEnvironments(true)"
                     class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-container-high text-outline hover:text-on-surface hover:bg-surface-container-highest transition-colors">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13">
                     <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -114,7 +113,7 @@
     }
     .env-lang-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 22px rgba(0,0,0,0.25);
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.25);
     }
 
     /* app icon */
@@ -208,12 +207,13 @@
 
 <!-- ── Script ─────────────────────────────────────────────────────────── -->
 <script>
-    var envAllApps  = [];
-    var envAllLangs = [];
-    var envFilter   = 'all';
-    var envQuery    = '';
+    var envAllApps   = [];
+    var envAllLangs  = [];
+    var envFilter    = 'all';
+    var envQuery     = '';
+    var _envCacheReady = false;   // true after first successful load
+    var _envLoading    = false;   // guard against concurrent loads
 
-    // colour + abbreviation for each language id
     var ENV_LANG_STYLE = {
         gcc:    { bg: '#1e3a5f', fg: '#5b9bd5', label: 'GCC'  },
         clang:  { bg: '#1e3a5f', fg: '#5b9bd5', label: 'CLG'  },
@@ -229,24 +229,85 @@
         mvn:    { bg: '#2d0810', fg: '#C71A36', label: 'MVN'  }
     };
 
-    window.loadEnvironments = function () {
+    // Called on every tab switch — instant if cache is warm, deferred fetch otherwise.
+    window.loadEnvironments = function (forceRefresh) {
+        if (_envCacheReady && !forceRefresh) {
+            // Cache hit: just re-render immediately, no Java call needed
+            envRender();
+            return;
+        }
+        if (_envLoading) return;   // already in flight
+
+        // Show loading state right away so the UI doesn't look frozen
+        _envLoading = true;
         document.getElementById('env-loading').style.display = 'flex';
         document.getElementById('env-content').style.display = 'none';
-        document.getElementById('env-search').value = '';
-        envQuery = '';
-
-        try {
-            var appsJson  = (window.app && window.app.getInstalledApps)  ? window.app.getInstalledApps()  : '[]';
-            var langsJson = (window.app && window.app.getInstalledLanguages) ? window.app.getInstalledLanguages() : '[]';
-            envAllApps  = JSON.parse(appsJson);
-            envAllLangs = JSON.parse(langsJson);
-        } catch (e) {
-            console.error('loadEnvironments error:', e);
-            envAllApps = []; envAllLangs = [];
+        if (forceRefresh) {
+            document.getElementById('env-search').value = '';
+            envQuery = '';
         }
 
-        envRender();
+        // Defer the blocking Java calls so the page-switch CSS transition
+        // can paint its first frame before we block the thread.
+        setTimeout(function () {
+            // ── Step 1: languages (fast — parallel subprocess detection) ──
+            try {
+                var langsJson = (window.app && window.app.getInstalledLanguages)
+                    ? window.app.getInstalledLanguages() : '[]';
+                envAllLangs = JSON.parse(langsJson);
+            } catch (e) { envAllLangs = []; }
+
+            // Render languages immediately so there's something to see
+            _renderLangsPartial();
+
+            // ── Step 2: apps (slower — filesystem scan) in next tick ──
+            setTimeout(function () {
+                try {
+                    var appsJson = (window.app && window.app.getInstalledApps)
+                        ? window.app.getInstalledApps() : '[]';
+                    envAllApps = JSON.parse(appsJson);
+                } catch (e) { envAllApps = []; }
+
+                _envCacheReady = true;
+                _envLoading    = false;
+                envRender();
+            }, 0);
+        }, 80);   // 80 ms — enough for the showPage display:block repaint
     };
+
+    // Partial render: show languages + spinner-still-visible for apps
+    function _renderLangsPartial() {
+        var q         = envQuery;
+        var showLang  = envFilter === 'all' || envFilter === 'lang';
+        var showApps  = envFilter === 'all' || envFilter === 'apps';
+        var langSec   = document.getElementById('env-lang-section');
+        var appsSec   = document.getElementById('env-apps-section');
+
+        if (!showLang && !showApps) return;
+
+        // Reveal content area but keep loading indicator for apps section
+        document.getElementById('env-loading').style.display = 'none';
+        document.getElementById('env-content').style.display = '';
+
+        langSec.style.display = showLang ? '' : 'none';
+        appsSec.style.display = 'none';   // apps not ready yet
+
+        if (showLang) {
+            var langs = envAllLangs.filter(function(l) {
+                return !q || l.name.toLowerCase().indexOf(q) !== -1;
+            });
+            document.getElementById('env-lang-count').textContent = '(' + langs.length + ')';
+            var langGrid  = document.getElementById('env-lang-grid');
+            var langEmpty = document.getElementById('env-lang-empty');
+            if (langs.length === 0) {
+                langGrid.innerHTML = '';
+                langEmpty.classList.remove('hidden');
+            } else {
+                langEmpty.classList.add('hidden');
+                langGrid.innerHTML = langs.map(envLangCard).join('');
+            }
+        }
+    }
 
     function envSetFilter(f) {
         envFilter = f;

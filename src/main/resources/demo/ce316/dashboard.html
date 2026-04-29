@@ -199,26 +199,58 @@
             </div>
 
             <!-- ALT: Terminal -->
-            <div class="h-56 border-t border-outline-variant/10 flex flex-col shrink-0" style="background-color: rgba(14,14,14,0.95); backdrop-filter: blur(100px);">
-                <div class="flex items-center justify-between px-5 py-2 bg-white/5 border-b border-white/5 shrink-0">
+            <div id="terminal-panel"
+                 class="border-t border-white/[0.06] flex flex-col shrink-0"
+                 style="height:224px; background-color:#0d0d0d; transition:height 0.22s cubic-bezier(.4,0,.2,1); overflow:hidden;">
+
+                <!-- Header (always visible) -->
+                <div class="flex items-center justify-between px-4 shrink-0"
+                     style="height:36px; background:#111111; border-bottom:1px solid rgba(255,255,255,0.06);">
                     <div class="flex items-center gap-2">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" class="text-primary"><path d="M20 4H4c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.89-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.58-2.59L7.5 9l4 4-4 4z"/></svg>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-outline">Terminal — Interactive Shell</span>
+                        <!-- Terminal icon -->
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="color:#4edea3; opacity:0.7; flex-shrink:0;">
+                            <path d="M20 4H4c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.89-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.58-2.59L7.5 9l4 4-4 4z"/>
+                        </svg>
+                        <span class="select-none" style="font-family:'CascadiaCode',monospace; font-size:11px; color:#4edea3; letter-spacing:0.02em;">Terminal</span>
                     </div>
-                    <div class="flex gap-1.5">
-                        <div class="w-2.5 h-2.5 rounded-full bg-error/40"></div>
-                        <div class="w-2.5 h-2.5 rounded-full bg-secondary/40"></div>
-                        <div class="w-2.5 h-2.5 rounded-full bg-primary/40"></div>
+                    <div class="flex items-center gap-2">
+                        <!-- Clear button -->
+                        <button onclick="terminalClear()" title="Clear terminal (Ctrl+L)"
+                                class="focus:outline-none transition-colors select-none"
+                                style="font-family:'CascadiaCode',monospace; font-size:9px; color:rgba(255,255,255,0.2); letter-spacing:0.05em;"
+                                onmouseenter="this.style.color='rgba(255,255,255,0.55)'" onmouseleave="this.style.color='rgba(255,255,255,0.2)'">CLEAR</button>
+                        <div style="width:1px; height:12px; background:rgba(255,255,255,0.08);"></div>
+                        <!-- Toggle chevron -->
+                        <button id="term-toggle-btn" onclick="toggleTerminal()" title="Collapse / expand"
+                                class="flex items-center justify-center focus:outline-none transition-colors"
+                                style="width:20px; height:20px; color:rgba(255,255,255,0.2);"
+                                onmouseenter="this.style.color='rgba(255,255,255,0.6)'" onmouseleave="this.style.color='rgba(255,255,255,0.2)'">
+                            <svg id="term-chevron" viewBox="0 0 24 24" fill="currentColor" width="13" height="13"
+                                 style="transition:transform 0.22s cubic-bezier(.4,0,.2,1);">
+                                <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
-                <div id="terminal-output" class="flex-1 overflow-y-auto p-5 font-mono text-xs space-y-1 text-[#A3BE8C]" style="scrollbar-width:none;">
-                    <div class="text-white/25 text-[10px]">System terminal ready.</div>
-                </div>
-                <div class="px-5 py-2.5 flex items-center text-sm font-mono shrink-0 bg-white/5 focus-within:bg-white/10 transition-colors border-t border-white/5">
-                    <span class="text-primary mr-2 font-bold select-none">$</span>
-                    <input type="text" id="terminal-input" autocomplete="off" spellcheck="false"
-                           class="bg-transparent border-none outline-none text-white w-full focus:ring-0 p-0 text-xs"
-                           placeholder="Enter a command..."/>
+
+                <!-- Body (output + input) -->
+                <div id="terminal-body" class="flex-1 flex flex-col overflow-hidden">
+                    <div id="terminal-output"
+                         class="flex-1 overflow-y-auto term-scroll"
+                         style="font-family:'CascadiaCode',monospace; padding:10px 16px 6px; line-height:1.7; font-size:12px; color:#c9d1d9; scroll-behavior:smooth; background:#0d0d0d;">
+                        <div style="color:rgba(255,255,255,0.18); font-size:10px; margin-bottom:4px; user-select:none;">
+                            bash · type a command and press ↵
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0"
+                         style="height:34px; padding:0 16px; background:#0a0a0a; border-top:1px solid rgba(255,255,255,0.05);">
+                        <span id="term-prompt" class="font-bold select-none shrink-0" style="font-family:'CascadiaCode',monospace; font-size:12px; color:#4edea3;">~ $</span>
+                        <input type="text" id="terminal-input" autocomplete="off" spellcheck="false"
+                               class="bg-transparent border-none outline-none w-full focus:ring-0 p-0"
+                               style="font-family:'CascadiaCode',monospace; font-size:12px; color:#f0f0f0; caret-color:#4edea3;"
+                               placeholder=""
+                               onkeydown="terminalHandleKey(event, this)"/>
+                    </div>
                 </div>
             </div>
 
@@ -300,6 +332,28 @@
 
     .code-scroll::-webkit-scrollbar-thumb:hover {
         background: rgba(16,185,129,0.45);
+    }
+    .terminal-scroll::-webkit-scrollbar,
+    .term-scroll::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    .terminal-scroll::-webkit-scrollbar-track,
+    .term-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .terminal-scroll::-webkit-scrollbar-thumb,
+    .term-scroll::-webkit-scrollbar-thumb {
+        background: rgba(134, 148, 138, 0.18);
+        border-radius: 999px;
+    }
+    .terminal-scroll::-webkit-scrollbar-corner,
+    .term-scroll::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+    .terminal-scroll::-webkit-scrollbar-thumb:hover,
+    .term-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(134, 148, 138, 0.38);
     }
     #code-modal-table td {padding: 0;}
     #code-modal-table .ln {
@@ -526,24 +580,178 @@
             if (window.app) window.app.runPipeline();
         };
 
+        // ─────────────────────────────────────────────────────────────────
+        //  TERMINAL  (real shell via Java TerminalSession)
+        // ─────────────────────────────────────────────────────────────────
+
+        const termHistory = [];      // command history (oldest → newest)
+        let   termHistIdx  = -1;     // -1 = not browsing
+        let   termBusy     = false;  // true while a command is running
+        let   termOpen     = true;   // panel expanded?
+
+        const TERM_H_OPEN     = '224px';
+        const TERM_H_COLLAPSED = '36px';
+
+        // ── Callbacks invoked by Java via Platform.runLater ───────────────
+
+        window.terminalReceiveLine = function(line) {
+            const out = document.getElementById('terminal-output');
+            if (!out) return;
+            const div = document.createElement('div');
+            div.style.cssText = 'color:#c9d1d9; white-space:pre; word-break:break-all;';
+            div.textContent = line;
+            out.appendChild(div);
+            out.scrollTop = out.scrollHeight;
+        };
+
+        window.terminalCommandDone = function(rc) {
+            clearTimeout(_termSafetyTimer);
+            termBusy = false;
+            var input = document.getElementById('terminal-input');
+            if (input) { input.disabled = false; input.focus(); }
+            if (rc && rc !== 0) {
+                const out = document.getElementById('terminal-output');
+                const d = document.createElement('div');
+                d.style.cssText = 'color:#ff6b6b; font-size:10px; opacity:0.55; margin-top:1px;';
+                d.textContent = '[exit ' + rc + ']';
+                out.appendChild(d);
+                out.scrollTop = out.scrollHeight;
+            }
+        };
+
+        window.terminalUpdateCwd = function(cwd) {
+            const short = cwd.replace(/^\/Users\/[^\/]+/, '~')
+                             .replace(/^\/home\/[^\/]+/, '~');
+            const cwdEl   = document.getElementById('term-cwd');
+            const promptEl = document.getElementById('term-prompt');
+            if (cwdEl)    cwdEl.textContent = short;
+            if (promptEl) promptEl.textContent = short + ' $';
+        };
+
+        window.terminalClear = function() {
+            const out = document.getElementById('terminal-output');
+            if (out) out.innerHTML = '';
+        };
+
+        window.toggleTerminal = function() {
+            termOpen = !termOpen;
+            const panel   = document.getElementById('terminal-panel');
+            const body    = document.getElementById('terminal-body');
+            const chevron = document.getElementById('term-chevron');
+            if (panel)   panel.style.height       = termOpen ? TERM_H_OPEN : TERM_H_COLLAPSED;
+            if (body)    body.style.visibility    = termOpen ? 'visible' : 'hidden';
+            if (chevron) chevron.style.transform  = termOpen ? '' : 'rotate(180deg)';
+            if (termOpen) document.getElementById('terminal-input')?.focus();
+        };
+
+        window.terminalInterruptCmd = function() {
+            if (window.app && window.app.terminalInterrupt) window.app.terminalInterrupt();
+        };
+
+        // ── appendTerminal — kept for pipeline / config messages ──────────
+
         function appendTerminal(el, msg, color) {
-            const line = document.createElement('div');
-            line.style.color = color || '#A3BE8C';
-            line.textContent = msg;
-            el.appendChild(line);
-            el.scrollTop = el.scrollHeight;
+            const out = el || document.getElementById('terminal-output');
+            const div = document.createElement('div');
+            div.style.color     = color || '#A3BE8C';
+            div.style.whiteSpace = 'pre';
+            div.textContent = msg;
+            out.appendChild(div);
+            out.scrollTop = out.scrollHeight;
         }
 
-        document.getElementById('terminal-input').addEventListener('keydown', function(e) {
-            if (e.key !== 'Enter') return;
-            const val = this.value.trim();
+        // ── Input handler ─────────────────────────────────────────────────
+        // Defined as a named global so the inline onkeydown attribute can call it.
+        // This is the most reliable approach in JavaFX WebView because scripts
+        // injected via innerHTML are re-executed asynchronously, which means
+        // addEventListener may fire before the element is fully initialised.
+
+        var _termSafetyTimer = null;   // auto-unlock if Java never calls back
+
+        window.terminalHandleKey = function(e, input) {
+            input = input || document.getElementById('terminal-input');
+
+            // ── Arrow-up / Arrow-down: history navigation ──
+            if (e.key === 'ArrowUp' || e.keyCode === 38) {
+                e.preventDefault();
+                if (!termHistory.length) return;
+                termHistIdx = Math.min(termHistIdx + 1, termHistory.length - 1);
+                input.value = termHistory[termHistory.length - 1 - termHistIdx];
+                setTimeout(function(){ input.setSelectionRange(input.value.length, input.value.length); }, 0);
+                return;
+            }
+            if (e.key === 'ArrowDown' || e.keyCode === 40) {
+                e.preventDefault();
+                if (termHistIdx <= 0) { termHistIdx = -1; input.value = ''; return; }
+                termHistIdx--;
+                input.value = termHistory[termHistory.length - 1 - termHistIdx];
+                return;
+            }
+
+            // ── Ctrl+C: interrupt running command ──
+            if ((e.key === 'c' || e.keyCode === 67) && e.ctrlKey) {
+                e.preventDefault();
+                appendTerminal(document.getElementById('terminal-output'), '^C', '#ff6b6b');
+                terminalInterruptCmd();
+                clearTimeout(_termSafetyTimer);
+                termBusy = false;
+                input.disabled = false;
+                input.value = '';
+                termHistIdx = -1;
+                return;
+            }
+
+            // ── Enter: send command ──
+            var isEnter = (e.key === 'Enter' || e.keyCode === 13 || e.which === 13);
+            if (!isEnter) return;
+            e.preventDefault();
+
+            var val = input.value.trim();
+            input.value = '';
+            termHistIdx = -1;
             if (!val) return;
-            const termOut = document.getElementById('terminal-output');
-            appendTerminal(termOut, '$ ' + val, '#E5E2E1');
-            if (window.app) window.app.runCommand(val);
-            else appendTerminal(termOut, 'command not found: ' + val.split(' ')[0], '#ff6b6b');
-            this.value = '';
-        });
+
+            // Built-in clear — no round-trip needed
+            if (val === 'clear' || val === 'cls') { terminalClear(); return; }
+
+            // Echo the command line
+            var out = document.getElementById('terminal-output');
+            var promptTxt = (document.getElementById('term-prompt') || {}).textContent || '$';
+            var echoDiv = document.createElement('div');
+            echoDiv.style.cssText = 'color:#e5e2e1; white-space:pre;';
+            echoDiv.textContent   = promptTxt + ' ' + val;
+            out.appendChild(echoDiv);
+            out.scrollTop = out.scrollHeight;
+
+            // Save to history
+            if (termHistory[termHistory.length - 1] !== val) termHistory.push(val);
+            if (termHistory.length > 200) termHistory.shift();
+
+            // Disable while running + safety re-enable after 30 s
+            termBusy = true;
+            input.disabled = true;
+            clearTimeout(_termSafetyTimer);
+            _termSafetyTimer = setTimeout(function() {
+                input.disabled = false;
+                termBusy = false;
+            }, 30000);
+
+            if (window.app && window.app.runCommand) {
+                window.app.runCommand(val);
+            } else {
+                // No Java bridge — simulate
+                setTimeout(function() {
+                    window.terminalReceiveLine('bash: ' + val.split(' ')[0] + ': command not found');
+                    window.terminalCommandDone(127);
+                }, 80);
+            }
+        };
+
+        // Also wire via addEventListener as a belt-and-braces backup
+        (function() {
+            var inp = document.getElementById('terminal-input');
+            if (inp) inp.addEventListener('keydown', function(e) { window.terminalHandleKey(e, this); });
+        })();
 
         window.editGrade = function(id) {
             currentEditId = id;

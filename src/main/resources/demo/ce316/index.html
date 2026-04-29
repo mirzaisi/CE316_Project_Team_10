@@ -80,8 +80,15 @@
     </script>
 
     <style>
+        @font-face {
+            font-family: 'CascadiaCode';
+            src: url('CascadiaCode-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
         body { font-family: 'Inter', sans-serif; background-color: #131313; color: #E5E2E1; }
         .material-symbols-outlined { display: inline-flex; align-items: center; justify-content: center; }
+        .font-cascadia { font-family: 'CascadiaCode', 'Cascadia Code', monospace !important; }
     </style>
 
 </head>
@@ -123,7 +130,9 @@
         if (env)  env.style.display  = (page === 'environments') ? '' : 'none';
 
         if (page === 'environments' && typeof loadEnvironments === 'function') {
-            loadEnvironments();
+            // requestAnimationFrame ensures the container's display:block has been
+            // painted before we trigger any potentially-blocking Java bridge calls.
+            requestAnimationFrame(function() { loadEnvironments(); });
         }
     };
 
