@@ -14,6 +14,7 @@
             theme: {
                 extend: {
                     colors: {
+                        "white":"#ffffff",
                         "error-container": "#93000a",
                         "on-tertiary": "#68000a",
                         "secondary-fixed": "#ffddb8",
@@ -86,8 +87,9 @@
 </head>
 <body class="dark overflow-hidden h-screen flex flex-col">
 
-<div id="topbar-container" class="relative z-50" ></div>
+<div id="topbar-container" class="relative z-50"></div>
 <div id="dashboard-container" class="flex-1 overflow-hidden z-49"></div>
+<div id="environments-container" class="flex-1 overflow-hidden z-49" style="display:none;"></div>
 
 <script>
     const SVG_ICONS = {
@@ -114,6 +116,17 @@
         });
     }
 
+    window.showPage = function(page) {
+        var dash = document.getElementById('dashboard-container');
+        var env  = document.getElementById('environments-container');
+        if (dash) dash.style.display = (page === 'dashboard') ? '' : 'none';
+        if (env)  env.style.display  = (page === 'environments') ? '' : 'none';
+
+        if (page === 'environments' && typeof loadEnvironments === 'function') {
+            loadEnvironments();
+        }
+    };
+
     async function loadComponent(containerId, file) {
         const res = await fetch(file);
         const html = await res.text();
@@ -131,6 +144,7 @@
     window.addEventListener("load", async () => {
         await loadComponent("topbar-container", "top_bar.html");
         await loadComponent("dashboard-container", "dashboard.html");
+        await loadComponent("environments-container", "environments.html");
 
         // Java bridge bağlantıları
         document.getElementById("btn-import-config")?.addEventListener("click", () => {

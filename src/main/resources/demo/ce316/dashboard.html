@@ -100,7 +100,7 @@
                         </div>
 
                         <!-- Öğrenci listesi -->
-                        <div class="flex-1 px-6 py-4 pb-4 overflow-y-auto no-scrollbar">
+                        <div class="flex-1 px-6 py-4 pb-4 overflow-y-auto code-scroll">
 
                             <div class="bg-surface-container-low rounded-2xl overflow-hidden shadow-2xl border border-outline-variant/5">
 
@@ -199,7 +199,7 @@
             </div>
 
             <!-- ALT: Terminal -->
-            <div class="h-56 border-t border-outline-variant/10 flex flex-col shrink-0" style="background-color: rgba(14,14,14,0.95); backdrop-filter: blur(20px);">
+            <div class="h-56 border-t border-outline-variant/10 flex flex-col shrink-0" style="background-color: rgba(14,14,14,0.95); backdrop-filter: blur(100px);">
                 <div class="flex items-center justify-between px-5 py-2 bg-white/5 border-b border-white/5 shrink-0">
                     <div class="flex items-center gap-2">
                         <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13" class="text-primary"><path d="M20 4H4c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.89-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.58-2.59L7.5 9l4 4-4 4z"/></svg>
@@ -228,8 +228,8 @@
 </div>
 
 <!-- Not Düzenleme Modal -->
-<div id="edit-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);">
-    <div class="bg-surface-container-low border border-outline-variant/20 rounded-2xl p-6 w-80 shadow-2xl">
+<div id="edit-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.6); backdrop-filter:blur(100px);">
+    <div class="bg-surface-container-low border border-outline-variant/20 rounded-2xl p-6 w-80 shadow-2xl ">
         <h3 class="text-sm font-bold text-on-surface mb-1">Edit Grade</h3>
         <p id="modal-student-id" class="text-[10px] font-mono text-outline-variant mb-4">U0000000</p>
         <input id="modal-grade-input" type="number" min="0" max="100"
@@ -242,7 +242,7 @@
 </div>
 
 <!-- Kod Görüntüleyici Modal -->
-<div id="code-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.7); backdrop-filter:blur(6px);">
+<div id="code-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,0.7); backdrop-filter:blur(100px);">
     <div class="bg-[#1B1B1C] border border-outline-variant/20 rounded-2xl shadow-2xl flex flex-col" style="width:680px; max-width:95vw; max-height:80vh;">
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-3.5 border-b border-outline-variant/10 shrink-0">
@@ -255,13 +255,13 @@
                     <p id="code-modal-path" class="text-[10px] text-outline-variant">submissions/U0000000/main.c</p>
                 </div>
             </div>
-            <button onclick="closeCodeModal()" class="w-7 h-7 rounded-lg hover:bg-surface-container-high flex items-center justify-center text-outline-variant hover:text-on-surface transition-all">
+            <button onclick="closeCodeModal()" class="w-7 h-7 rounded-lg hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-white transition-all">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
             </button>
         </div>
         <!-- Satır numaralı kod alanı -->
-        <div class="flex-1 overflow-auto" style="scrollbar-width:thin; scrollbar-color:#3c4a42 transparent;">
-            <table class="w-full border-collapse font-mono text-xs" id="code-modal-table">
+        <div class="flex-1 overflow-auto code-scroll ">
+            <table class="w-full border-collapse font-mono text-xs " id="code-modal-table" >
                 <!-- JS tarafından doldurulur -->
             </table>
         </div>
@@ -282,8 +282,26 @@
     .btn-run-pulse {
         animation: pulse-green 2s infinite cubic-bezier(0.66, 0, 0, 1);
     }
+    .code-scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
 
-    #code-modal-table td { padding: 0; }
+    .code-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .code-scroll::-webkit-scrollbar-thumb {
+        background: rgba(78, 222, 163, 0.25);
+        border-radius: 999px;
+    }
+    .code-scroll::-webkit-scrollbar-corner{
+        background: transparent;
+    }
+
+    .code-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(16,185,129,0.45);
+    }
+    #code-modal-table td {padding: 0;}
     #code-modal-table .ln {
         padding: 2px 16px 2px 20px;
         text-align: right;
@@ -297,8 +315,8 @@
         color: #c9d1d9;
         white-space: pre;
     }
-    #code-modal-table tr:hover .ln { color: #86948a; }
-    #code-modal-table tr:hover .lc { background: rgba(255,255,255,0.03); }
+    #code-modal-table tr:hover .ln {color: #86948a;}
+    #code-modal-table tr:hover .lc {background: rgba(255,255,255,0.03);}
 </style>
 
 <script>

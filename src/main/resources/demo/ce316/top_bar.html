@@ -90,12 +90,9 @@
 
         function setActive(page) {
             buttons.forEach(btn => {
-                if (btn.dataset.page === page) {
-                    btn.classList.add('is-active');
-                } else {
-                    btn.classList.remove('is-active');
-                }
+                btn.classList.toggle('is-active', btn.dataset.page === page);
             });
+            if (window.showPage) window.showPage(page);
             if (window.app) window.app.navigate(page);
             else console.log('Navigate:', page);
         }
