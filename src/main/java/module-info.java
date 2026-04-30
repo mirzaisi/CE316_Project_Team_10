@@ -8,4 +8,7 @@ module demo.ce316 {
 
     opens demo.ce316 to javafx.fxml;
     exports demo.ce316;
+
+    opens demo.ce316.terminal to javafx.fxml;
+    exports demo.ce316.terminal;
 }

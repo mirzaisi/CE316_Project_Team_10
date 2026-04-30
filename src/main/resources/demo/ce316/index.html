@@ -82,7 +82,7 @@
     <style>
         @font-face {
             font-family: 'CascadiaCode';
-            src: url('CascadiaCode-Regular.ttf') format('truetype');
+            src: url('fonts/CascadiaCode-Regular.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
@@ -130,9 +130,7 @@
         if (env)  env.style.display  = (page === 'environments') ? '' : 'none';
 
         if (page === 'environments' && typeof loadEnvironments === 'function') {
-            // requestAnimationFrame ensures the container's display:block has been
-            // painted before we trigger any potentially-blocking Java bridge calls.
-            requestAnimationFrame(function() { loadEnvironments(); });
+            loadEnvironments();
         }
     };
 
@@ -151,9 +149,9 @@
     }
 
     window.addEventListener("load", async () => {
-        await loadComponent("topbar-container", "top_bar.html");
-        await loadComponent("dashboard-container", "dashboard.html");
-        await loadComponent("environments-container", "environments.html");
+        await loadComponent("topbar-container", "views/top_bar.html");
+        await loadComponent("dashboard-container", "views/dashboard.html");
+        await loadComponent("environments-container", "views/environments.html");
 
         // Java bridge bağlantıları
         document.getElementById("btn-import-config")?.addEventListener("click", () => {

@@ -1,6 +1,7 @@
 package demo.ce316;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import javafx.scene.web.WebEngine;
@@ -8,10 +9,9 @@ import javafx.stage.Stage;
 import javafx.scene.text.Font;
 import netscape.javascript.JSObject;
 
-import java.io.BufferedReader;
+import demo.ce316.terminal.TerminalSession;
+
 import java.io.File;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javafx.application.Platform;
 
 public class ApplicationMain extends Application {
 
@@ -30,7 +29,7 @@ public class ApplicationMain extends Application {
 
     @Override
     public void start(Stage stage) {
-        Font.loadFont(getClass().getResourceAsStream("MaterialSymbols.ttf"),14);
+        Font.loadFont(getClass().getResourceAsStream("fonts/MaterialSymbols.ttf"), 14);
         WebView webView = new WebView();
         webEngine = webView.getEngine();
 
@@ -100,7 +99,7 @@ public class ApplicationMain extends Application {
             System.out.println("Java: Pipeline starting...");
         }
 
-        /** Sends a command to the persistent shell session. Output comes back via JS callbacks. */
+        /** Sends a command to the OS-appropriate persistent shell. Output comes back via JS callbacks. */
         public void runCommand(String cmd) {
             if (terminalSession == null) {
                 terminalSession = new TerminalSession(webEngine);
@@ -117,56 +116,26 @@ public class ApplicationMain extends Application {
             System.out.println("Navigate: " + page);
         }
 
-
-        public String getInstalledApps() {
-            List<File> bundles = new ArrayList<>();
-            collectAppBundles(new File("/Applications"), bundles, 2);
-            bundles.sort(Comparator.comparing(f -> f.getName().toLowerCase()));
-
-            File cacheDir = new File(System.getProperty("user.home"), ".iae/icons");
-            cacheDir.mkdirs();
-
-            List<Object[]> toExtract = new ArrayList<>();
-            StringBuilder sb = new StringBuilder("[");
-            boolean first = true;
-
-            for (File app : bundles) {
-                String name     = app.getName().replaceAll("\\.app$", "");
-                String safeName = name.replaceAll("[^a-zA-Z0-9._\\-]", "_");
-                File   cached   = new File(cacheDir, safeName + ".png");
-
-                String iconUrl  = (cached.exists() && cached.length() > 0)
-                    ? cached.toURI().toString() : "";
-
-                if (iconUrl.isEmpty()) toExtract.add(new Object[]{app, name, cached});
-
-                if (!first) sb.append(",");
-                sb.append("{\"id\":");   appendJsonStr(sb, name);
-                sb.append(",\"name\":"); appendJsonStr(sb, name);
-                sb.append(",\"iconUrl\":"); appendJsonStr(sb, iconUrl);
-                sb.append("}");
-                first = false;
-            }
-
-            // Background extraction for uncached icons (daemon threads)
-            if (!toExtract.isEmpty()) {
-                ExecutorService pool = Executors.newFixedThreadPool(
-                    Math.min(4, toExtract.size()), r -> {
-                        Thread t = new Thread(r, "iae-icon-extractor");
-                        t.setDaemon(true);
-                        return t;
-                    });
-                for (Object[] item : toExtract) {
-                    pool.submit(() -> extractIcon((File) item[0], (String) item[1], (File) item[2]));
-                }
-                pool.shutdown();
-            }
-
-            return sb.append("]").toString();
+        /**
+         * Starts a fully asynchronous environment scan.
+         * Returns immediately — JS is notified via callbacks as results arrive:
+         *   onEnvLangs(jsonArray)   — all detected language runtimes
+         *   onEnvApps(jsonArray)    — all installed .app bundles
+         *   onEnvScanDone()         — scan fully complete
+         */
+        public void startEnvironmentScan() {
+            Thread t = new Thread(() -> {
+                scanLanguages();
+                scanApps();
+                Platform.runLater(() -> jsEnvCall("onEnvScanDone()"));
+            }, "iae-env-scan");
+            t.setDaemon(true);
+            t.start();
         }
 
-        public String getInstalledLanguages() {
-            // {id, displayName, command, versionFlag}
+        // ── Language scan ────────────────────────────────────────────────────
+
+        private void scanLanguages() {
             final String[][] defs = {
                 {"gcc",    "GCC",      "gcc",      "--version"},
                 {"clang",  "Clang",    "clang",    "--version"},
@@ -182,42 +151,102 @@ public class ApplicationMain extends Application {
                 {"mvn",    "Maven",    "mvn",      "--version"},
             };
 
+            // Detect each tool in parallel; each resolved result is pushed
+            // to JS immediately so the UI can show it without waiting for all.
             ExecutorService pool = Executors.newFixedThreadPool(defs.length, r -> {
-                Thread t = new Thread(r, "iae-lang-detect");
-                t.setDaemon(true);
-                return t;
+                Thread th = new Thread(r, "iae-lang-detect");
+                th.setDaemon(true);
+                return th;
             });
 
-            List<Future<String[]>> futures = new ArrayList<>();
-            for (String[] d : defs) {
-                final String[] def = d;
+            List<Future<?>> futures = new ArrayList<>();
+            for (String[] def : defs) {
                 futures.add(pool.submit(() -> {
                     String ver = detectTool(def[2], def[3]);
-                    return ver != null ? new String[]{def[0], def[1], ver} : null;
+                    if (ver == null && "python3".equals(def[2]))
+                        ver = detectTool("python", def[3]);
+                    if (ver == null) return;
+
+                    StringBuilder sb = new StringBuilder("[{\"id\":");
+                    appendJsonStr(sb, def[0]);
+                    sb.append(",\"name\":"); appendJsonStr(sb, def[1]);
+                    sb.append(",\"version\":"); appendJsonStr(sb, ver);
+                    sb.append("}]");
+                    final String json = sb.toString();
+                    Platform.runLater(() -> jsEnvCall("onEnvLangs(" + json + ")"));
                 }));
             }
             pool.shutdown();
             try { pool.awaitTermination(6, TimeUnit.SECONDS); }
             catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-
-            StringBuilder sb = new StringBuilder("[");
-            boolean first = true;
-            for (Future<String[]> f : futures) {
-                try {
-                    String[] r = f.isDone() ? f.get() : null;
-                    if (r == null) continue;
-                    if (!first) sb.append(",");
-                    sb.append("{\"id\":");      appendJsonStr(sb, r[0]);
-                    sb.append(",\"name\":");    appendJsonStr(sb, r[1]);
-                    sb.append(",\"version\":"); appendJsonStr(sb, r[2]);
-                    sb.append("}");
-                    first = false;
-                } catch (Exception ignored) {}
-            }
-            return sb.append("]").toString();
         }
 
-        // ── private helpers ──────────────────────────────────────────────
+        // ── App scan ─────────────────────────────────────────────────────────
+
+        private void scanApps() {
+            List<File> bundles = new ArrayList<>();
+            // On Windows there is no /Applications — skip silently
+            File appsDir = new File("/Applications");
+            if (appsDir.isDirectory()) collectAppBundles(appsDir, bundles, 2);
+
+            bundles.sort(Comparator.comparing(f -> f.getName().toLowerCase()));
+
+            File cacheDir = new File(System.getProperty("user.home"), ".iae/icons");
+            cacheDir.mkdirs();
+
+            List<Object[]> toExtract = new ArrayList<>();
+            StringBuilder sb = new StringBuilder("[");
+            boolean first = true;
+
+            for (File app : bundles) {
+                String name     = app.getName().replaceAll("\\.app$", "");
+                String safeName = name.replaceAll("[^a-zA-Z0-9._\\-]", "_");
+                File   cached   = new File(cacheDir, safeName + ".png");
+
+                String iconUrl = (cached.exists() && cached.length() > 0)
+                    ? cached.toURI().toString() : "";
+
+                if (iconUrl.isEmpty()) toExtract.add(new Object[]{app, name, cached});
+
+                if (!first) sb.append(",");
+                sb.append("{\"id\":");      appendJsonStr(sb, name);
+                sb.append(",\"name\":");    appendJsonStr(sb, name);
+                sb.append(",\"iconUrl\":"); appendJsonStr(sb, iconUrl);
+                sb.append("}");
+                first = false;
+            }
+
+            final String appsJson = sb.append("]").toString();
+            Platform.runLater(() -> jsEnvCall("onEnvApps(" + appsJson + ")"));
+
+            // Extract uncached icons in the background after the list is sent
+            if (!toExtract.isEmpty()) {
+                ExecutorService pool = Executors.newFixedThreadPool(
+                    Math.min(4, toExtract.size()), r -> {
+                        Thread th = new Thread(r, "iae-icon-extractor");
+                        th.setDaemon(true);
+                        return th;
+                    });
+                for (Object[] item : toExtract) {
+                    pool.submit(() -> extractIcon((File) item[0], (String) item[1], (File) item[2]));
+                }
+                pool.shutdown();
+            }
+        }
+
+        // ── JS callback helper ────────────────────────────────────────────────
+
+        private void jsEnvCall(String expr) {
+            try {
+                String fn = expr.split("\\(")[0];
+                webEngine.executeScript(
+                    "if(typeof " + fn + "==='function'){" + expr + "}");
+            } catch (Exception e) {
+                System.err.println("jsEnvCall error: " + e.getMessage());
+            }
+        }
+
+        // ── private helpers ──────────────────────────────────────────────────
 
         private static final String TOOL_PATH =
             "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin";
@@ -235,13 +264,18 @@ public class ApplicationMain extends Application {
                 boolean done = proc.waitFor(3, TimeUnit.SECONDS);
                 if (!done) { proc.destroyForcibly(); return null; }
 
+                // Non-zero exit → tool not installed or returned an error
+                if (proc.exitValue() != 0) return null;
+
                 String out = new String(bytes).trim();
                 if (out.isEmpty()) return null;
 
+                // Only return a result if we can extract an actual version number.
+                // Never return raw error messages (e.g. Windows App Execution Aliases).
                 String line = out.split("\\n")[0].trim();
                 java.util.regex.Matcher m =
                     java.util.regex.Pattern.compile("(\\d+\\.\\d+(?:\\.\\d+)?)").matcher(line);
-                return m.find() ? m.group(1) : (line.length() > 50 ? line.substring(0, 50) : line);
+                return m.find() ? m.group(1) : null;
             } catch (Exception e) {
                 return null;
             }
@@ -318,137 +352,6 @@ public class ApplicationMain extends Application {
     public void stop() {
         DatabaseManager.getInstance().close();
         if (terminalSession != null) terminalSession.destroy();
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  TerminalSession — persistent /bin/bash process with bidirectional I/O
-    // ─────────────────────────────────────────────────────────────────────────
-    private static class TerminalSession {
-
-        private static final String SHELL_PATH =
-            "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin";
-
-        // Sentinels that are extremely unlikely to appear in normal command output
-        private static final String SEN_CWD  = "__IAE_CWD_7f3a__:";
-        private static final String SEN_DONE = "__IAE_DONE_7f3a__:";
-
-        private Process    process;
-        private PrintWriter stdin;
-        private final WebEngine webEngine;
-
-        TerminalSession(WebEngine we) {
-            this.webEngine = we;
-            startShell();
-        }
-
-        // ── Shell lifecycle ───────────────────────────────────────────────
-
-        private void startShell() {
-            try {
-                ProcessBuilder pb = new ProcessBuilder("/bin/bash", "--norc", "--noprofile");
-                pb.environment().put("TERM",     "dumb");
-                pb.environment().put("PS1",      "");
-                pb.environment().put("HISTFILE", "");
-                String envPath = System.getenv("PATH");
-                pb.environment().put("PATH",
-                    SHELL_PATH + (envPath != null ? ":" + envPath : ""));
-                pb.directory(new java.io.File(System.getProperty("user.home")));
-                pb.redirectErrorStream(true);
-
-                process = pb.start();
-                stdin   = new PrintWriter(
-                    new java.io.OutputStreamWriter(process.getOutputStream()), true);
-
-                startReader();
-
-                // Emit initial CWD/DONE so the JS prompt initialises correctly
-                stdin.println("echo '" + SEN_CWD  + "'\"$(pwd)\"");
-                stdin.println("echo '" + SEN_DONE + "0'");
-                stdin.flush();
-
-            } catch (Exception e) {
-                System.err.println("TerminalSession: start failed — " + e.getMessage());
-            }
-        }
-
-        private void startReader() {
-            Thread t = new Thread(() -> {
-                try (BufferedReader r = new BufferedReader(
-                        new InputStreamReader(process.getInputStream()))) {
-                    String line;
-                    while ((line = r.readLine()) != null) {
-                        // Strip ANSI escape codes
-                        String clean = line.replaceAll("\\[[0-9;]*[A-Za-z]", "");
-
-                        if (clean.startsWith(SEN_CWD)) {
-                            final String cwd = clean.substring(SEN_CWD.length());
-                            Platform.runLater(() -> jsCall(
-                                "terminalUpdateCwd('" + escJs(cwd) + "')"));
-
-                        } else if (clean.startsWith(SEN_DONE)) {
-                            String rcRaw = clean.substring(SEN_DONE.length())
-                                               .replaceAll("[^0-9]", "");
-                            final String rc = rcRaw.isEmpty() ? "0" : rcRaw;
-                            Platform.runLater(() -> jsCall(
-                                "terminalCommandDone(" + rc + ")"));
-
-                        } else if (!clean.isEmpty()) {
-                            final String esc = escJs(clean);
-                            Platform.runLater(() -> jsCall(
-                                "terminalReceiveLine('" + esc + "')"));
-                        }
-                    }
-                } catch (Exception ignored) {}
-
-                // Shell exited — notify JS
-                Platform.runLater(() -> jsCall(
-                    "terminalReceiveLine('[shell process ended]');" +
-                    "terminalCommandDone(0)"));
-            }, "iae-terminal-reader");
-            t.setDaemon(true);
-            t.start();
-        }
-
-        // ── Public API ────────────────────────────────────────────────────
-
-        void send(String cmd) {
-            if (process == null || !process.isAlive()) startShell();
-            stdin.println(cmd);
-            // Capture exit code first, then report CWD + done
-            stdin.println("__iae_rc=$?; echo '" + SEN_CWD  + "'\"$(pwd)\"; " +
-                                        "echo '" + SEN_DONE + "'\"$__iae_rc\"");
-            stdin.flush();
-        }
-
-        void interrupt() {
-            if (process != null && process.isAlive()) {
-                stdin.print('\u0003'); // ETX = Ctrl+C
-                stdin.println();
-                stdin.flush();
-            }
-        }
-
-        void destroy() {
-            if (process != null) process.destroyForcibly();
-        }
-
-        // ── Helpers ───────────────────────────────────────────────────────
-
-        private void jsCall(String expr) {
-            try {
-                webEngine.executeScript("if(typeof " + expr.split("\\(")[0] +
-                    "==='function'){" + expr + "}");
-            } catch (Exception e) {
-                System.err.println("TerminalSession jsCall error: " + e.getMessage());
-            }
-        }
-
-        private static String escJs(String s) {
-            if (s == null) return "";
-            return s.replace("\\", "\\\\")
-                    .replace("'",  "\\'")
-                    .replace("\r", "");
-        }
     }
 
     public static void main(String[] args) {
